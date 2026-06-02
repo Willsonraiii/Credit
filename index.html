@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Yalambar Store - Credit Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{font-family:'Inter','Noto Sans Devanagari',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#020617;color:#e2e8f0}
+.glass{background:rgba(15,23,42,0.9);backdrop-filter:blur(16px);border:1px solid rgba(51,65,85,0.4)}
+.card{background:rgba(15,23,42,0.6);border:1px solid rgba(51,65,85,0.3);border-radius:14px}
+.card-hover{transition:all .2s ease}
+.card-hover:active{transform:scale(0.98)}
+.btn-primary{background:linear-gradient(135deg,#059669,#10b981);color:#fff;font-weight:600;padding:12px;border-radius:12px}
+.btn-primary:active{transform:scale(0.97)}
+.btn-danger{background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;font-weight:600;padding:12px;border-radius:12px}
+.btn-secondary{background:rgba(51,65,85,0.5);border:1px solid rgba(71,85,105,0.5);color:#e2e8f0;padding:12px;border-radius:12px}
+.input-field{background:rgba(15,23,42,0.8);border:1px solid rgba(51,65,85,0.5);color:#f1f5f9;padding:12px;border-radius:12px;width:100%}
+.input-field:focus{outline:none;border-color:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,0.15)}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.animate-in{animation:fi .25s ease-out}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.slide-up{animation:su .3s ease-out}
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:100;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;animation:fi .3s ease;max-width:90%;text-align:center}
+.toast-success{background:rgba(6,78,59,0.95);border:1px solid #059669;color:#34d399}
+.toast-error{background:rgba(127,29,29,0.95);border:1px solid #dc2626;color:#fca5a5}
+.toast-info{background:rgba(30,58,138,0.95);border:1px solid #3b82f6;color:#93c5fd}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.modal-content{background:#0f172a;border:1px solid rgba(51,65,85,0.5);border-radius:20px 20px 0 0;width:100%;max-height:90vh;overflow-y:auto;animation:su .25s ease-out}
+@media(min-width:640px){.modal-overlay{align-items:center}.modal-content{border-radius:16px;max-width:480px;max-height:85vh}}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;border:1px solid}
+.lang-np *{font-family:'Noto Sans Devanagari','Inter',system-ui,sans-serif}
+.pin-input{width:56px;height:56px;text-align:center;font-size:24px;font-weight:700;border-radius:12px;background:rgba(15,23,42,0.8);border:1px solid rgba(51,65,85,0.5);color:#f1f5f9}
+.pin-input:focus{outline:none;border-color:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,0.15)}
+.user-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:600}
+</style>
+<base target="_blank">
+</head>
+<body class="min-h-screen">
+
+<!-- LOGIN SCREEN -->
+<div id="screen-login" class="min-h-screen flex flex-col items-center justify-center p-5">
+  <div class="w-full max-w-sm">
+    <div class="text-center mb-6">
+      <div class="w-20 h-20 rounded-2xl mx-auto mb-4 shadow-lg bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center">
+        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+      </div>
+      <h1 class="text-2xl font-bold text-white" data-en="Yalambar Store" data-np="यालम्बर स्टोर">Yalambar Store</h1>
+      <p class="text-sm text-slate-400 mt-1" data-en="Credit Tracker System" data-np="क्रेडिट ट्र्याकर प्रणाली">Credit Tracker System</p>
+    </div>
+    <div class="card p-5">
+      <div class="text-center mb-4">
+        <p class="text-xs text-slate-500 mb-3" data-en="Enter your PIN code" data-np="आफ्नो पिन कोड हाल्नुहोस्">Enter your PIN code</p>
+        <div class="flex justify-center gap-2 mb-2" id="pin-display">
+          <div class="w-3 h-3 rounded-full bg-slate-700" id="pin-dot-0"></div>
+          <div class="w-3 h-3 rounded-full bg-slate-700" id="pin-dot-1"></div>
+          <div class="w-3 h-3 rounded-full bg-slate-700" id="pin-dot-2"></div>
+          <div class="w-3 h-3 rounded-full bg-slate-700" id="pin-dot-3"></div>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-2 mb-4">
+        <button onclick="enterPin('1')" class="pin-input">1</button>
+        <button onclick="enterPin('2')" class="pin-input">2</button>
+        <button onclick="enterPin('3')" class="pin-input">3</button>
+        <button onclick="enterPin('4')" class="pin-input">4</button>
+        <button onclick="enterPin('5')" class="pin-input">5</button>
+        <button onclick="enterPin('6')" class="pin-input">6</button>
+        <button onclick="enterPin('7')" class="pin-input">7</button>
+        <button onclick="enterPin('8')" class="pin-input">8</button>
+        <button onclick="enterPin('9')" class="pin-input">9</button>
+        <button onclick="clearPin()" class="pin-input text-red-400 text-sm font-medium" data-en="CLR" data-np="मेट">CLR</button>
+        <button onclick="enterPin('0')" class="pin-input">0</button>
+        <button onclick="backspacePin()" class="pin-input text-slate-400">
+          <svg class="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"/></svg>
+        </button>
+      </div>
+      <p class="text-[10px] text-slate-600 text-center" data-en="Quick Login" data-np="द्रुत लगइन">Quick Login</p>
+      <div class="flex justify-center gap-2 mt-2 flex-wrap">
+        <button onclick="quickLogin('1212')" class="px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700 text-xs text-slate-300">Wilson</button>
+        <button onclick="quickLogin('1234')" class="px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700 text-xs text-slate-300">Nita</button>
+        <button onclick="quickLogin('0000')" class="px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700 text-xs text-slate-300">Maila</button>
+        <button onclick="quickLogin('1122')" class="px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700 text-xs text-slate-300">Kush</button>
+      </div>
+    </div>
+    <div class="mt-4 text-center">
+      <p class="text-[10px] text-slate-600" data-en="All data stored locally" data-np="सबै डाटा स्थानीय रूपमा">All data stored locally</p>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="screen-app" class="hidden min-h-screen flex flex-col">
+  <header class="fixed top-0 left-0 right-0 z-40 glass border-b border-slate-800/50">
+    <div class="flex items-center justify-between px-4 py-3 max-w-lg mx-auto">
+      <div class="flex items-center gap-2.5">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+        </div>
+        <div>
+          <h1 class="text-sm font-bold text-white" data-en="Yalambar Store" data-np="यालम्बर स्टोर">Yalambar Store</h1>
+          <div class="flex items-center gap-1.5">
+            <span id="header-role" class="text-[10px] font-medium">--</span>
+            <span class="text-[10px] text-slate-600">|</span>
+            <span id="nepali-time" class="text-[10px] text-slate-500">--:--</span>
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-1">
+        <button onclick="toggleLanguage()" class="p-2 rounded-lg hover:bg-slate-800/50 text-slate-400" title="Switch Language">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
+        </button>
+        <button onclick="handleLogout()" class="p-2 rounded-lg hover:bg-slate-800/50 text-slate-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+  <main id="main-content" class="flex-1 pt-16 pb-24 px-4 max-w-lg mx-auto w-full"></main>
+  <nav class="fixed bottom-0 left-0 right-0 z-40 glass border-t border-slate-800/50" style="padding-bottom:env(safe-area-inset-bottom,20px)">
+    <div class="flex justify-around py-2 max-w-lg mx-auto" id="bottom-nav"></div>
+  </nav>
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay" class="modal-overlay hidden" onclick="if(event.target===this)closeModal()">
+  <div class="modal-content" id="modal-body" onclick="event.stopPropagation()"></div>
+</div>
+
+<script>
+
+// ==================== USERS ====================
+const USERS = [
+  { id: "u1", pin: "1212", name: "Wilson", nameNp: "विल्सन", color: "#10b981" },
+  { id: "u2", pin: "1234", name: "Nita", nameNp: "निता", color: "#3b82f6" },
+  { id: "u3", pin: "0000", name: "Maila", nameNp: "माइला", color: "#f59e0b" },
+  { id: "u4", pin: "1122", name: "Kush", nameNp: "कुश", color: "#8b5cf6" }
+];
+
+function getUser(id) { return USERS.find(function(u) { return u.id === id; }); }
+function uName(id) { var u = getUser(id); return u ? (L === "np" ? u.nameNp : u.name) : id; }
+function uColor(id) { var u = getUser(id); return u ? u.color : "#64748b"; }
+
+// ==================== LANGUAGE ====================
+const TX = {
+  en: {
+    dashboard: "Dashboard", customers: "Customers", transactions: "History", settings: "Settings",
+    totalCredit: "Total Credit", customersCount: "Customers", todaySales: "Today Sales", overdue: "Overdue",
+    creditOverview: "Credit Overview", recentActivity: "Recent Activity", viewAll: "View All", topDebtors: "Top Debtors",
+    search: "Search by name or phone...", all: "All", active: "Active", closed: "Closed",
+    addCustomer: "Add New Customer", fullName: "Full Name", phone: "Phone Number", address: "Address",
+    creditLimit: "Credit Limit (Rs.)", notes: "Notes", cancel: "Cancel", add: "Add Customer",
+    editCustomer: "Edit Customer", saveChanges: "Save Changes", deleteCustomer: "Delete Customer",
+    deleteConfirm: "This will permanently remove the customer and all their transaction history.",
+    addCredit: "Add Credit", takePayment: "Take Payment", amount: "Amount (Rs.)", description: "Description",
+    date: "Date", recordPayment: "Record Payment", transactionHistory: "Transaction History",
+    entries: "entries", noTransactions: "No transactions yet", storeInfo: "Store Info",
+    dataManagement: "Data Management", exportData: "Export Data (JSON)", resetAllData: "Reset All Data",
+    about: "About", aboutText: "Yalambar Store Credit Tracker helps you manage customer credit, track payments, and monitor outstanding balances. All data is stored locally on your device.",
+    builtWith: "Built with care for daily store operations.", currency: "Currency", nepaliRupee: "Nepalese Rupee (NPR)",
+    totalCustomers: "Total Customers", totalTransactions: "Total Transactions", totalCreditGiven: "Total Credit Given",
+    resetConfirm: "This will delete all customers and transactions. This cannot be undone.",
+    welcome: "Welcome", invalidPin: "Invalid PIN code", customerAdded: "Customer added successfully!",
+    customerUpdated: "Customer updated!", customerDeleted: "Customer deleted", creditAdded: "Credit added",
+    paymentRecorded: "Payment recorded", dataExported: "Data exported!", dataReset: "All data reset to defaults",
+    exceedsLimit: "Amount exceeds credit limit!", exceedsBalance: "Payment exceeds balance!",
+    customerNotFound: "Customer not found", available: "Available", utilized: "utilized", ofLimit: "of limit",
+    needAttention: "Need attention", activeCount: "active", overdueCount: "overdue",
+    today: "Today", yesterday: "Yesterday", daysAgo: "days ago", customerSince: "Customer since",
+    currentBalance: "Current Balance", backup: "Cloud Backup", backupDesc: "Backup your data to cloud storage",
+    restore: "Restore from Backup", backupNow: "Backup Now", lastBackup: "Last Backup", never: "Never",
+    backupSuccess: "Backup successful!", restoreSuccess: "Restore successful!", noBackupFound: "No backup found",
+    language: "Language", english: "English", nepali: "Nepali", switchLang: "Switch to Nepali", switchEng: "Switch to English",
+    loggedInAs: "Logged in as", by: "by", editedBy: "edited by", addedBy: "added by", credit: "credit"
+  },
+  np: {
+    dashboard: "ड्यासबोर्ड", customers: "ग्राहकहरू", transactions: "इतिहास", settings: "सेटिङहरू",
+    totalCredit: "कुल क्रेडिट", customersCount: "ग्राहकहरू", todaySales: "आजको बिक्री", overdue: "ढिलो",
+    creditOverview: "क्रेडिट अवलोकन", recentActivity: "हालको गतिविधि", viewAll: "सबै हेर्नुहोस्", topDebtors: "शीर्ष ऋणीहरू",
+    search: "नाम वा फोनले खोज्नुहोस्...", all: "सबै", active: "सक्रिय", closed: "बन्द",
+    addCustomer: "नयाँ ग्राहक थप्नुहोस्", fullName: "पूरा नाम", phone: "फोन नम्बर", address: "ठेगाना",
+    creditLimit: "क्रेडिट सीमा (रु.)", notes: "टिप्पणीहरू", cancel: "रद्द गर्नुहोस्", add: "ग्राहक थप्नुहोस्",
+    editCustomer: "ग्राहक सम्पादन गर्नुहोस्", saveChanges: "परिवर्तनहरू सुरक्षित गर्नुहोस्", deleteCustomer: "ग्राहक मेट्नुहोस्",
+    deleteConfirm: "यसले ग्राहक र उनीहरूको सबै कारोबार इतिहास स्थायी रूपमा हटाउनेछ।",
+    addCredit: "क्रेडिट थप्नुहोस्", takePayment: "भुक्तानी लिनुहोस्", amount: "रकम (रु.)", description: "विवरण",
+    date: "मिति", recordPayment: "भुक्तानी रेकर्ड गर्नुहोस्", transactionHistory: "कारोबार इतिहास",
+    entries: "प्रविष्टिहरू", noTransactions: "अहिलेसम्म कुनै कारोबार छैन", storeInfo: "स्टोर जानकारी",
+    dataManagement: "डाटा व्यवस्थापन", exportData: "डाटा निर्यात गर्नुहोस् (JSON)", resetAllData: "सबै डाटा रिसेट गर्नुहोस्",
+    about: "बारेमा", aboutText: "यालम्बर स्टोर क्रेडिट ट्र्याकरले ग्राहक क्रेडिट व्यवस्थापन, भुक्तानी ट्र्याकिङ र बकाया रकम अनुगमन गर्न मद्दत गर्छ। सबै डाटा यस डिभाइसमा स्थानीय रूपमा संग्रहित छ।",
+    builtWith: "दैनिक स्टोर सञ्चालनको लागि हेरचाह गरेर निर्माण गरिएको।", currency: "मुद्रा", nepaliRupee: "नेपाली रुपैयाँ (NPR)",
+    totalCustomers: "कुल ग्राहकहरू", totalTransactions: "कुल कारोबारहरू", totalCreditGiven: "कुल दिइएको क्रेडिट",
+    resetConfirm: "यसले सबै ग्राहक र कारोबारहरू मेट्नेछ। यो पूर्ववत गर्न सकिँदैन।",
+    welcome: "स्वागत छ", invalidPin: "अमान्य पिन कोड", customerAdded: "ग्राहक सफलतापूर्वक थपियो!",
+    customerUpdated: "ग्राहक अद्यावधिक गरियो!", customerDeleted: "ग्राहक मेटियो", creditAdded: "क्रेडिट थपियो",
+    paymentRecorded: "भुक्तानी रेकर्ड गरियो", dataExported: "डाटा निर्यात गरियो!", dataReset: "सबै डाटा पूर्वनिर्धारितमा रिसेट गरियो",
+    exceedsLimit: "रकम क्रेडिट सीमा भन्दा बढी छ!", exceedsBalance: "भुक्तानी ब्यालेन्स भन्दा बढी छ!",
+    customerNotFound: "ग्राहक भेटिएन", available: "उपलब्ध", utilized: "प्रयोग भएको", ofLimit: "सीमाको",
+    needAttention: "ध्यान आवश्यक", activeCount: "सक्रिय", overdueCount: "ढिलो",
+    today: "आज", yesterday: "हिजो", daysAgo: "दिन अघि", customerSince: "ग्राहक बनेको मिति",
+    currentBalance: "हालको ब्यालेन्स", backup: "क्लाउड ब्याकअप", backupDesc: "आफ्नो डाटा क्लाउड स्टोरेजमा ब्याकअप गर्नुहोस्",
+    restore: "ब्याकअपबाट पुनर्स्थापना गर्नुहोस्", backupNow: "अहिले ब्याकअप गर्नुहोस्", lastBackup: "अन्तिम ब्याकअप", never: "कहिल्यै",
+    backupSuccess: "ब्याकअप सफल भयो!", restoreSuccess: "पुनर्स्थापना सफल भयो!", noBackupFound: "कुनै ब्याकअप भेटिएन",
+    language: "भाषा", english: "English", nepali: "Nepali", switchLang: "English मा स्विच गर्नुहोस्", switchEng: "Switch to Nepali",
+    loggedInAs: "लगइन गरिएको", by: "द्वारा", editedBy: "सम्पादन गरिएको", addedBy: "थपिएको", credit: "क्रेडिट"
+  }
+};
+
+var L = "en";
+var CU = null;
+var CP = "dashboard";
+var TT = null;
+var CS = "", CF = "";
+var PI = "";
+
+// ==================== DB ====================
+var DB = {
+  get: function(k, d) { try { var v = localStorage.getItem("ys_" + k); return v ? JSON.parse(v) : d; } catch(e) { return d; } },
+  set: function(k, v) { localStorage.setItem("ys_" + k, JSON.stringify(v)); }
+};
+
+function initData() {
+  if (!DB.get("users")) DB.set("users", USERS);
+  if (!DB.get("customers")) {
+    DB.set("customers", [
+      {id:"c1",name:"राम बहादुर",nameEn:"Ram Bahadur",phone:"9801234567",address:"काठमाडौं",creditLimit:50000,balance:12500,status:"ACTIVE",createdAt:"2024-01-15",notes:"नियमित ग्राहक",addedBy:"u1",addedByName:"Wilson"},
+      {id:"c2",name:"सीता देवी",nameEn:"Sita Devi",phone:"9809876543",address:"ललितपुर",creditLimit:30000,balance:8500,status:"ACTIVE",createdAt:"2024-02-20",notes:"नयाँ ग्राहक",addedBy:"u2",addedByName:"Nita"},
+      {id:"c3",name:"हरि प्रसाद",nameEn:"Hari Prasad",phone:"9812345678",address:"भक्तपुर",creditLimit:100000,balance:67500,status:"ACTIVE",createdAt:"2023-11-10",notes:"VIP ग्राहक",addedBy:"u3",addedByName:"Maila"},
+      {id:"c4",name:"गीता शर्मा",nameEn:"Gita Sharma",phone:"9823456789",address:"पोखरा",creditLimit:25000,balance:0,status:"ACTIVE",createdAt:"2024-03-05",notes:"",addedBy:"u4",addedByName:"Kush"},
+      {id:"c5",name:"कृष्ण दास",nameEn:"Krishna Das",phone:"9834567890",address:"काठमाडौं",creditLimit:40000,balance:38500,status:"OVERDUE",createdAt:"2023-09-20",notes:"बाँकी रकम",addedBy:"u1",addedByName:"Wilson"}
+    ]);
+  }
+  if (!DB.get("transactions")) {
+    DB.set("transactions", [
+      {id:"t1",customerId:"c1",type:"CREDIT",amount:5000,description:"चामल र दाल",date:"2024-06-01",createdBy:"u1",createdByName:"Wilson",createdAt:"2024-06-01T10:30:00"},
+      {id:"t2",customerId:"c1",type:"PAYMENT",amount:3000,description:"नगद भुक्तानी",date:"2024-06-05",createdBy:"u2",createdByName:"Nita",createdAt:"2024-06-05T14:20:00"},
+      {id:"t3",customerId:"c1",type:"CREDIT",amount:2500,description:"तेल र मसला",date:"2024-06-10",createdBy:"u3",createdByName:"Maila",createdAt:"2024-06-10T09:15:00"},
+      {id:"t4",customerId:"c2",type:"CREDIT",amount:3500,description:"किराना सामान",date:"2024-06-08",createdBy:"u4",createdByName:"Kush",createdAt:"2024-06-08T16:45:00"},
+      {id:"t5",customerId:"c2",type:"PAYMENT",amount:2000,description:"आंशिक भुक्तानी",date:"2024-06-12",createdBy:"u1",createdByName:"Wilson",createdAt:"2024-06-12T11:00:00"},
+      {id:"t6",customerId:"c3",type:"CREDIT",amount:15000,description:"थोक चामल",date:"2024-06-02",createdBy:"u2",createdByName:"Nita",createdAt:"2024-06-02T08:30:00"},
+      {id:"t7",customerId:"c3",type:"CREDIT",amount:8000,description:"खाने तेल",date:"2024-06-15",createdBy:"u3",createdByName:"Maila",createdAt:"2024-06-15T13:20:00"},
+      {id:"t8",customerId:"c5",type:"CREDIT",amount:12000,description:"चाडपर्व सामग्री",date:"2024-04-20",createdBy:"u4",createdByName:"Kush",createdAt:"2024-04-20T10:00:00"},
+      {id:"t9",customerId:"c5",type:"CREDIT",amount:8000,description:"थप सामग्री",date:"2024-05-10",createdBy:"u1",createdByName:"Wilson",createdAt:"2024-05-10T15:30:00"},
+      {id:"t10",customerId:"c5",type:"PAYMENT",amount:5000,description:"आंशिक भुक्तानी",date:"2024-05-25",createdBy:"u2",createdByName:"Nita",createdAt:"2024-05-25T12:00:00"}
+    ]);
+  }
+  if (!DB.get("settings")) DB.set("settings", {storeName:"Yalambar Store",currency:"NPR",lang:"en"});
+  if (!DB.get("backups")) DB.set("backups", []);
+  var s = DB.get("settings", {});
+  if (s.lang) L = s.lang;
+}
+
+// ==================== DATE/TIME ====================
+var NM = ["बैशाख","जेठ","असार","श्रावण","भदौ","असोज","कार्तिक","मंसिर","पुष","माघ","फाल्गुन","चैत"];
+var ND = ["आइतबार","सोमबार","मंगलबार","बुधबार","बिहीबार","शुक्रबार","शनिबार"];
+var ED = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var EM = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+function gnd() {
+  var n = new Date();
+  return { y: n.getFullYear() + 56, m: NM[(n.getMonth() + 3) % 12], d: ((n.getDate() + 15) % 30) || 15, w: ND[n.getDay()] };
+}
+
+function gd() {
+  var n = new Date();
+  if (L === "np") { var np = gnd(); return np.w + ", " + np.d + " " + np.m + " " + np.y; }
+  return ED[n.getDay()] + ", " + n.getDate() + " " + EM[n.getMonth()] + " " + n.getFullYear();
+}
+
+function fd(d) { try { return new Date(d).toLocaleDateString("en-IN", {day:"numeric", month:"short", year:"numeric"}); } catch(e) { return d; } }
+
+function da(d) {
+  var days = Math.floor((Date.now() - new Date(d).getTime()) / 86400000);
+  if (L === "np") return days === 0 ? "आज" : days === 1 ? "हिजो" : days + " दिन अघि";
+  return days === 0 ? "Today" : days === 1 ? "Yesterday" : days + " days ago";
+}
+
+function fn(n) {
+  if (L === "np") return "रु. " + new Intl.NumberFormat("en-IN").format(Math.abs(n || 0));
+  return "Rs. " + new Intl.NumberFormat("en-IN").format(Math.abs(n || 0));
+}
+
+function t(k) { return TX[L][k] || k; }
+
+function ut() {
+  var n = new Date();
+  var el = document.getElementById("nepali-time");
+  if (el) el.textContent = n.toLocaleTimeString("en-IN", {hour:"2-digit", minute:"2-digit", hour12:true});
+}
+setInterval(ut, 1000);
+
+// ==================== PIN LOGIN ====================
+function enterPin(d) {
+  if (PI.length < 4) { PI += d; updPin(); if (PI.length === 4) setTimeout(doLogin, 200); }
+}
+function backspacePin() { PI = PI.slice(0, -1); updPin(); }
+function clearPin() { PI = ""; updPin(); }
+function updPin() {
+  for (var i = 0; i < 4; i++) {
+    var dot = document.getElementById("pin-dot-" + i);
+    if (dot) dot.className = "w-3 h-3 rounded-full " + (i < PI.length ? "bg-emerald-400" : "bg-slate-700");
+  }
+}
+function quickLogin(pin) { PI = pin; updPin(); setTimeout(doLogin, 200); }
+
+function doLogin() {
+  var user = USERS.find(function(u) { return u.pin === PI; });
+  if (user) {
+    CU = user;
+    document.getElementById("screen-login").classList.add("hidden");
+    document.getElementById("screen-app").classList.remove("hidden");
+    var hr = document.getElementById("header-role");
+    hr.textContent = L === "np" ? user.nameNp : user.name;
+    hr.style.color = user.color;
+    toast(t("welcome") + ", " + (L === "np" ? user.nameNp : user.name) + "!", "success");
+    applyLang();
+    showPage("dashboard");
+    PI = ""; updPin();
+  } else {
+    toast(t("invalidPin"), "error");
+    PI = ""; updPin();
+  }
+}
+
+function handleLogout() {
+  CU = null;
+  document.getElementById("screen-app").classList.add("hidden");
+  document.getElementById("screen-login").classList.remove("hidden");
+  PI = ""; updPin();
+}
+
+// ==================== LANGUAGE ====================
+function toggleLanguage() {
+  L = L === "en" ? "np" : "en";
+  var s = DB.get("settings", {}); s.lang = L; DB.set("settings", s);
+  toast(L === "np" ? "भाषा नेपालीमा परिवर्तन गरियो" : "Language changed to English", "success");
+  applyLang();
+  if (CP === "dashboard") renderDashboard();
+  else if (CP === "customers") renderCustomers();
+  else if (CP === "transactions") renderTransactions();
+  else if (CP === "settings") renderSettings();
+}
+
+function applyLang() {
+  document.body.classList.toggle("lang-np", L === "np");
+  document.querySelectorAll("[data-en][data-np]").forEach(function(el) { el.textContent = el.getAttribute("data-" + L); });
+  if (CU) {
+    var hr = document.getElementById("header-role");
+    hr.textContent = L === "np" ? CU.nameNp : CU.name;
+    hr.style.color = CU.color;
+  }
+}
+
+// ==================== TOAST & MODAL ====================
+function toast(msg, type) {
+  var existing = document.querySelector(".toast");
+  if (existing) existing.remove();
+  if (TT) clearTimeout(TT);
+  var el = document.createElement("div");
+  el.className = "toast toast-" + type; el.textContent = msg;
+  document.body.appendChild(el);
+  TT = setTimeout(function() { el.remove(); }, 3000);
+}
+function openModal(html) { document.getElementById("modal-body").innerHTML = html; document.getElementById("modal-overlay").classList.remove("hidden"); document.body.style.overflow = "hidden"; }
+function closeModal() { document.getElementById("modal-overlay").classList.add("hidden"); document.body.style.overflow = ""; }
+
+// ==================== NAV ====================
+var NAV = [
+  {id:"dashboard", lEn:"Home", lNp:"होम", i:"M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"},
+  {id:"customers", lEn:"Customers", lNp:"ग्राहक", i:"M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"},
+  {id:"transactions", lEn:"History", lNp:"इतिहास", i:"M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"},
+  {id:"settings", lEn:"Settings", lNp:"सेटिङ", i:"M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z"}
+];
+
+function renderNav() {
+  document.getElementById("bottom-nav").innerHTML = NAV.map(function(item) {
+    var active = CP === item.id || (CP === "customer-detail" && item.id === "customers");
+    var label = L === "np" ? item.lNp : item.lEn;
+    return '<button onclick="showPage('' + item.id + '')" class="flex flex-col items-center gap-0.5 px-4 py-1 ' + (active ? "text-emerald-400" : "text-slate-500") + '"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="' + item.i + '"/></svg><span class="text-[10px]">' + label + '</span></button>';
+  }).join("");
+}
+
+function showPage(page) {
+  CP = page; renderNav();
+  var content = document.getElementById("main-content");
+  content.innerHTML = ""; content.classList.remove("animate-in");
+  void content.offsetWidth; content.classList.add("animate-in");
+  window.scrollTo(0, 0);
+  if (page === "dashboard") renderDashboard();
+  else if (page === "customers") renderCustomers();
+  else if (page === "transactions") renderTransactions();
+  else if (page === "settings") renderSettings();
+}
+
+// ==================== DASHBOARD ====================
+function renderDashboard() {
+  var customers = DB.get("customers", []);
+  var transactions = DB.get("transactions", []);
+  var totalCredit = customers.reduce(function(s, c) { return s + c.balance; }, 0);
+  var activeCustomers = customers.filter(function(c) { return c.balance > 0; }).length;
+  var overdueCustomers = customers.filter(function(c) { return c.status === "OVERDUE"; }).length;
+  var today = new Date().toISOString().split("T")[0];
+  var todayTxns = transactions.filter(function(t) { return t.date === today; });
+  var todayCredit = todayTxns.filter(function(t) { return t.type === "CREDIT"; }).reduce(function(s, t) { return s + t.amount; }, 0);
+  var content = document.getElementById("main-content");
+  var html = "";
+
+  html += '<div class="mb-5"><p class="text-xs text-slate-400">' + gd() + '</p><h2 class="text-xl font-bold text-white">' + t("dashboard") + '</h2></div>';
+
+  html += '<div class="grid grid-cols-2 gap-3 mb-5">';
+  html += '<div class="card p-4 card-hover"><div class="flex items-center justify-between mb-2"><span class="text-[10px] text-slate-400 uppercase tracking-wider">' + t("totalCredit") + '</span><div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center"><svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div></div><p class="text-lg font-bold text-white">' + fn(totalCredit) + '</p><p class="text-[10px] text-slate-500 mt-1">' + activeCustomers + ' ' + t("activeCount") + '</p></div>';
+  html += '<div class="card p-4 card-hover"><div class="flex items-center justify-between mb-2"><span class="text-[10px] text-slate-400 uppercase tracking-wider">' + t("customersCount") + '</span><div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center"><svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div></div><p class="text-lg font-bold text-white">' + customers.length + '</p><p class="text-[10px] text-slate-500 mt-1">' + overdueCustomers + ' ' + t("overdueCount") + '</p></div>';
+  html += '<div class="card p-4 card-hover"><div class="flex items-center justify-between mb-2"><span class="text-[10px] text-slate-400 uppercase tracking-wider">' + t("todaySales") + '</span><div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center"><svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg></div></div><p class="text-lg font-bold text-white">' + todayTxns.filter(function(t) { return t.type === "CREDIT"; }).length + '</p><p class="text-[10px] text-slate-500 mt-1">' + fn(todayCredit) + ' ' + t("credit") + '</p></div>';
+  html += '<div class="card p-4 card-hover ' + (overdueCustomers > 0 ? "border-red-500/30" : "") + '"><div class="flex items-center justify-between mb-2"><span class="text-[10px] text-slate-400 uppercase tracking-wider">' + t("overdue") + '</span><div class="w-8 h-8 rounded-lg ' + (overdueCustomers > 0 ? "bg-red-500/10" : "bg-slate-700/30") + ' flex items-center justify-center"><svg class="w-4 h-4 ' + (overdueCustomers > 0 ? "text-red-400" : "text-slate-500") + '" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div></div><p class="text-lg font-bold ' + (overdueCustomers > 0 ? "text-red-400" : "text-white") + '">' + overdueCustomers + '</p><p class="text-[10px] text-slate-500 mt-1">' + t("needAttention") + '</p></div>';
+  html += '</div>';
+
+  // Chart - simplified to avoid brace issues
+  html += '<div class="card p-4 mb-5"><h3 class="text-sm font-semibold text-white mb-3">' + t("creditOverview") + '</h3><canvas id="dashChart" height="200"></canvas></div>';
+
+  // Recent Activity
+  html += '<div class="flex items-center justify-between mb-3"><h3 class="text-sm font-semibold text-white">' + t("recentActivity") + '</h3><button onclick="showPage('transactions')" class="text-xs text-emerald-400 hover:text-emerald-300">' + t("viewAll") + '</button></div>';
+  html += '<div class="space-y-2 mb-4">';
+  transactions.slice(0, 5).forEach(function(t) {
+    var c = customers.find(function(x) { return x.id === t.customerId; });
+    var un = uName(t.createdBy);
+    var uc = uColor(t.createdBy);
+    var dn = c ? (L === "np" ? c.name : c.nameEn) : "Unknown";
+    html += '<div class="card p-3 flex items-center justify-between card-hover" onclick="showCustomerDetail('' + t.customerId + '')"><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-full ' + (t.type === "CREDIT" ? "bg-red-500/10 text-red-400" : "bg-emerald-500/10 text-emerald-400") + ' flex items-center justify-center text-xs font-bold">' + (t.type === "CREDIT" ? "CR" : "PY") + '</div><div><p class="text-sm text-white">' + dn + '</p><p class="text-[10px] text-slate-500">' + t.description + ' &bull; ' + da(t.date) + '</p><p class="text-[10px]" style="color:' + uc + '">' + t("by") + ' ' + un + '</p></div></div><p class="text-sm font-bold ' + (t.type === "CREDIT" ? "text-red-400" : "text-emerald-400") + '">' + (t.type === "CREDIT" ? "+" : "-") + fn(t.amount) + '</p></div>';
+  });
+  html += '</div>';
+
+  // Top Debtors
+  html += '<div class="flex items-center justify-between mb-3"><h3 class="text-sm font-semibold text-white">' + t("topDebtors") + '</h3><button onclick="showPage('customers')" class="text-xs text-emerald-400 hover:text-emerald-300">' + t("viewAll") + '</button></div>';
+  html += '<div class="space-y-2">';
+  customers.filter(function(c) { return c.balance > 0; }).sort(function(a, b) { return b.balance - a.balance; }).slice(0, 3).forEach(function(c) {
+    var pct = Math.min(100, (c.balance / c.creditLimit) * 100);
+    var dn = L === "np" ? c.name : c.nameEn;
+    html += '<div class="card p-3 card-hover" onclick="showCustomerDetail('' + c.id + '')"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><div class="w-8 h-8 rounded-full bg-emerald-600/20 flex items-center justify-center text-emerald-400 text-xs font-bold">' + dn.split(" ").map(function(n) { return n[0]; }).join("").slice(0, 2) + '</div><div><p class="text-sm font-medium text-white">' + dn + '</p><p class="text-[10px] text-slate-500">' + c.phone + '</p></div></div><p class="text-sm font-bold text-white">' + fn(c.balance) + '</p></div><div class="w-full bg-slate-800 rounded-full h-1.5"><div class="h-1.5 rounded-full ' + (pct > 80 ? "bg-red-500" : pct > 50 ? "bg-amber-500" : "bg-emerald-500") + '" style="width:' + pct + '%"></div></div><p class="text-[10px] text-slate-500 mt-1">' + pct.toFixed(0) + '% ' + t("ofLimit") + ' ' + fn(c.creditLimit) + '</p></div>';
+  });
+  html += '</div>';
+  content.innerHTML = html;
+
+  // Render chart after DOM update - CORRECTED with proper brace balance
+  setTimeout(function() {
+    var ctx = document.getElementById("dashChart");
+    if (!ctx) return;
+    var labels = customers.map(function(c) { return L === "np" ? c.name.split(" ")[0] : c.nameEn.split(" ")[0]; });
+    var data = customers.map(function(c) { return c.balance; });
+    var colors = customers.map(function(c) { return c.balance > c.creditLimit * 0.8 ? "rgba(239,68,68,0.7)" : "rgba(16,185,129,0.7)"; });
+    new Chart(ctx, {
+      type: "bar",
+      data: { labels: labels, datasets: [{ label: L === "np" ? "ब्यालेन्स" : "Balance", data: data, backgroundColor: colors, borderRadius: 6, borderSkipped: false }] },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: "#64748b", font: { size: 10 } }, grid: { display: false } },
+          y: { ticks: { color: "#64748b", font: { size: 10 }, callback: function(v) { return (v / 1000) + "k"; } }, grid: { color: "#1e293b" } }
+        }
+      }
+    });
+  }, 100);
+}
+
+// ==================== CUSTOMERS ====================
+function renderCustomers() {
+  var customers = DB.get("customers", []);
+  if (CS) {
+    var q = CS.toLowerCase();
+    customers = customers.filter(function(c) { return c.name.toLowerCase().includes(q) || c.nameEn.toLowerCase().includes(q) || c.phone.includes(q); });
+  }
+  if (CF) customers = customers.filter(function(c) { return c.status === CF; });
+  var content = document.getElementById("main-content");
+  var html = "";
+
+  html += '<div class="mb-4"><h2 class="text-xl font-bold text-white">' + t("customers") + '</h2><p class="text-xs text-slate-400">' + customers.length + ' ' + t("totalCustomers").toLowerCase() + '</p></div>';
+  html += '<div class="flex gap-2 mb-4"><div class="flex-1 relative"><svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><input type="text" placeholder="' + t("search") + '" value="' + CS + '" oninput="CS=this.value;renderCustomers()" class="input-field pl-9 pr-3 py-2.5 text-sm"></div><select onchange="CF=this.value;renderCustomers()" class="input-field px-3 py-2.5 text-sm text-slate-300"><option value="">' + t("all") + '</option><option value="ACTIVE">' + t("active") + '</option><option value="OVERDUE">' + t("overdue") + '</option><option value="CLOSED">' + t("closed") + '</option></select></div>';
+
+  html += '<div class="space-y-2">';
+  customers.forEach(function(c) {
+    var pct = c.creditLimit > 0 ? (c.balance / c.creditLimit * 100) : 0;
+    var dn = L === "np" ? c.name : c.nameEn;
+    var abn = uName(c.addedBy);
+    var abc = uColor(c.addedBy);
+    html += '<div class="card p-4 card-hover" onclick="showCustomerDetail('' + c.id + '')"><div class="flex items-start justify-between"><div class="flex items-center gap-3"><div class="w-11 h-11 rounded-full bg-emerald-600/20 flex items-center justify-center text-emerald-400 font-bold text-sm">' + dn.split(" ").map(function(n) { return n[0]; }).join("").slice(0, 2) + '</div><div><div class="flex items-center gap-2"><h3 class="text-sm font-semibold text-white">' + dn + '</h3>' + (c.status === "OVERDUE" ? '<span class="badge bg-red-500/10 text-red-400 border-red-500/20">' + t("overdue") + '</span>' : c.status === "CLOSED" ? '<span class="badge bg-slate-500/10 text-slate-400 border-slate-500/20">' + t("closed") + '</span>' : '<span class="badge bg-emerald-500/10 text-emerald-400 border-emerald-500/20">' + t("active") + '</span>') + '</div><p class="text-[10px] text-slate-500 mt-0.5">' + c.phone + ' &bull; ' + c.address + '</p><p class="text-[10px]" style="color:' + abc + '">' + t("addedBy") + ': ' + abn + '</p></div></div><div class="text-right"><p class="text-sm font-bold text-white">' + fn(c.balance) + '</p><p class="text-[10px] text-slate-500">' + t("ofLimit") + ' ' + fn(c.creditLimit) + '</p></div></div><div class="mt-3"><div class="w-full bg-slate-800 rounded-full h-2"><div class="h-2 rounded-full ' + (pct > 80 ? "bg-red-500" : pct > 50 ? "bg-amber-500" : "bg-emerald-500") + ' transition-all" style="width:' + Math.min(100, pct) + '%"></div></div><div class="flex justify-between mt-1"><span class="text-[10px] text-slate-500">' + pct.toFixed(0) + '% ' + t("utilized") + '</span><span class="text-[10px] text-slate-500">' + t("available") + ': ' + fn(c.creditLimit - c.balance) + '</span></div></div></div>';
+  });
+  html += '</div>';
+  html += '<button onclick="openAddCustomerModal()" class="fixed bottom-20 right-4 w-14 h-14 btn-primary rounded-full shadow-lg flex items-center justify-center z-30"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg></button>';
+  content.innerHTML = html;
+}
+
+// ==================== CUSTOMER DETAIL ====================
+function showCustomerDetail(id) {
+  CP = "customer-detail"; renderNav();
+  var customers = DB.get("customers", []);
+  var transactions = DB.get("transactions", []);
+  var c = customers.find(function(x) { return x.id === id; });
+  if (!c) return toast(t("customerNotFound"), "error");
+  var custTxns = transactions.filter(function(t) { return t.customerId === id; }).sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+  var pct = c.creditLimit > 0 ? (c.balance / c.creditLimit * 100) : 0;
+  var available = c.creditLimit - c.balance;
+  var dn = L === "np" ? c.name : c.nameEn;
+  var abn = uName(c.addedBy);
+  var abc = uColor(c.addedBy);
+  var le = c.lastEditedBy ? uName(c.lastEditedBy) : null;
+  var lec = c.lastEditedBy ? uColor(c.lastEditedBy) : null;
+
+  var content = document.getElementById("main-content");
+  var html = "";
+
+  html += '<div class="flex items-center gap-3 mb-5"><button onclick="showPage('customers')" class="p-2 rounded-lg hover:bg-slate-800/50 text-slate-400"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></button><div class="flex-1"><h2 class="text-lg font-bold text-white">' + dn + '</h2><p class="text-[10px] text-slate-500">' + t("customerSince") + ' ' + fd(c.createdAt) + '</p></div><button onclick="openEditCustomerModal('' + c.id + '')" class="p-2 rounded-lg hover:bg-slate-800/50 text-slate-400"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button></div>';
+
+  html += '<div class="card p-4 mb-4"><div class="flex items-center gap-3 mb-4"><div class="w-14 h-14 rounded-full bg-emerald-600/20 flex items-center justify-center text-emerald-400 font-bold text-lg">' + dn.split(" ").map(function(n) { return n[0]; }).join("").slice(0, 2) + '</div><div>' + (c.status === "OVERDUE" ? '<span class="badge bg-red-500/10 text-red-400 border-red-500/20">' + t("overdue") + '</span>' : c.status === "CLOSED" ? '<span class="badge bg-slate-500/10 text-slate-400 border-slate-500/20">' + t("closed") + '</span>' : '<span class="badge bg-emerald-500/10 text-emerald-400 border-emerald-500/20">' + t("active") + '</span>') + '<p class="text-xs text-slate-500 mt-1">' + c.phone + '</p></div></div><div class="space-y-2 text-sm"><div class="flex justify-between"><span class="text-slate-400">' + t("address") + '</span><span class="text-slate-200">' + c.address + '</span></div><div class="flex justify-between"><span class="text-slate-400">' + t("creditLimit") + '</span><span class="text-white font-medium">' + fn(c.creditLimit) + '</span></div><div class="flex justify-between"><span class="text-slate-400">' + t("currentBalance") + '</span><span class="text-white font-bold">' + fn(c.balance) + '</span></div><div class="flex justify-between"><span class="text-slate-400">' + t("available") + '</span><span class="text-emerald-400 font-medium">' + fn(available) + '</span></div></div><div class="mt-4"><div class="w-full bg-slate-800 rounded-full h-2.5"><div class="h-2.5 rounded-full ' + (pct > 80 ? "bg-red-500" : pct > 50 ? "bg-amber-500" : "bg-emerald-500") + '" style="width:' + Math.min(100, pct) + '%"></div></div><p class="text-[10px] text-slate-500 mt-1 text-center">' + pct.toFixed(1) + '% ' + t("utilized") + '</p></div>';
+
+  html += '<div class="mt-3 flex flex-wrap gap-2">';
+  html += '<span class="user-chip" style="background:' + abc + '20;color:' + abc + ';border:1px solid ' + abc + '40">' + t("addedBy") + ': ' + abn + '</span>';
+  if (le) html += '<span class="user-chip" style="background:' + lec + '20;color:' + lec + ';border:1px solid ' + lec + '40">' + t("editedBy") + ': ' + le + '</span>';
+  html += '</div>';
+
+  if (c.notes) html += '<div class="mt-3 p-3 bg-slate-800/30 rounded-lg"><p class="text-xs text-slate-400">' + t("notes") + ': <span class="text-slate-300">' + c.notes + '</span></p></div>';
+  html += '</div>';
+
+  html += '<div class="flex gap-2 mb-4"><button onclick="openCreditModal('' + c.id + '')" class="flex-1 btn-primary text-sm flex items-center justify-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>' + t("addCredit") + '</button><button onclick="openPaymentModal('' + c.id + '')" class="flex-1 btn-secondary text-sm flex items-center justify-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>' + t("takePayment") + '</button></div>';
+
+  html += '<div class="flex items-center justify-between mb-3"><h3 class="text-sm font-semibold text-white">' + t("transactionHistory") + '</h3><span class="text-xs text-slate-500">' + custTxns.length + ' ' + t("entries") + '</span></div>';
+  html += '<div class="space-y-2 mb-4">';
+  if (custTxns.length === 0) {
+    html += '<div class="card p-6 text-center text-slate-500 text-sm">' + t("noTransactions") + '</div>';
+  } else {
+    custTxns.forEach(function(t) {
+      var txnUn = uName(t.createdBy);
+      var txnUc = uColor(t.createdBy);
+      html += '<div class="card p-3 flex items-center justify-between"><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-full ' + (t.type === "CREDIT" ? "bg-red-500/10 text-red-400" : "bg-emerald-500/10 text-emerald-400") + ' flex items-center justify-center text-xs font-bold">' + (t.type === "CREDIT" ? "CR" : "PY") + '</div><div><p class="text-sm text-white">' + t.description + '</p><p class="text-[10px] text-slate-500">' + fd(t.date) + '</p><p class="text-[10px]" style="color:' + txnUc + '">' + t("by") + ' ' + txnUn + '</p></div></div><p class="text-sm font-bold ' + (t.type === "CREDIT" ? "text-red-400" : "text-emerald-400") + '">' + (t.type === "CREDIT" ? "+" : "-") + fn(t.amount) + '</p></div>';
+    });
+  }
+  html += '</div>';
+  html += '<button onclick="confirmDeleteCustomer('' + c.id + '')" class="w-full py-3 rounded-xl border border-red-500/30 text-red-400 text-sm font-medium hover:bg-red-500/10 transition-colors">' + t("deleteCustomer") + '</button>';
+  content.innerHTML = html;
+}
+
+// ==================== ADD CUSTOMER ====================
+function openAddCustomerModal() {
+  openModal('<div class="p-5"><h3 class="text-lg font-bold text-white mb-4">' + t("addCustomer") + '</h3><form onsubmit="event.preventDefault();handleAddCustomer(this);" class="space-y-4"><div><label class="block text-xs font-medium text-slate-400 mb-1.5">' + t("fullName") + ' *</label><input type="text" name="name" required class="input-field text-sm" placeholder="Ram Bahadur"></div><div><label class="block text-xs font-medium text-slate-400 mb-1.5">' + t("phone") + ' *</label><input type="tel" name="phone" required class="input-field text-sm" placeholder="9801234567"></div><div><label class="block text-xs font-medium text-slate-400 mb-1.5">' + t("address") + '</label><input type="text" name="address" class="input-field text-sm" placeholder="Kathmandu"></div><div><label class="block text-xs font-medium text-slate-400 mb-1.5">' + t("creditLimit") + ' *</label><input type="number" name="creditLimit" required min="1000" class="input-field text-sm" placeholder="50000"></div><div><label class="block text-xs font-medium text-slate-400 mb-1.5">' + t("notes") + '</label><textarea name="notes" rows="2" class="input-field text-sm resize-none" placeholder="Notes..."></textarea></div><div class="flex gap-3 pt-2"><button type="button" onclick="closeModal()" class="flex-1 btn-secondary text-sm">' + t("cancel") + '</button><button type="submit" class="flex-1 btn-primary text-sm">' + t("add") + '</button></div></form></div>');
+}
+
+function handleAddCustomer(form) {
+  var fd = new FormData(form);
+  var name = fd.get("name");
+  var customers = DB.get("customers", []);
+  customers.push({
+    id: "c" + Date.now(), name: name, nameEn: name, phone: fd.get("phone"), address: fd.get("address") || "",
+    creditLimit: parseInt(fd.get("creditLimit")) || 10000, balance: 0, status: "ACTIVE",
+    createdAt: new Date().toISOString().split("T")[0], notes: fd.get("notes") || "",
+    addedBy: CU.id, addedByName: CU.name, lastEditedBy: null, lastEditedByName: null
+  });
+  DB.set("customers", customers);
+  closeModal();
+  toast(t("customerAdded"), "success");
+  renderCustomers();
+}
+
+// ==================== EDIT CUSTOMER ====================
+function openEditCustomerModal(id) {
+  var customers = DB.get("customers", []);
+  var c = customers.find(function(x) { return x.id === id; });
+  if (!c) return;
+  openModal('<div class="p-5"><h3 class="text-lg font-bold text-white mb-4">' + t("editCustomer") + '</h3><form onsubmit="event.preventDefault();handleEditCustomer('' + id + '',this);" class="space-y-4"><div><label class="block text-xs font-medium text-slate-400 mb-1.5">' + t("fullName") + '</label><input type="text" name="name" value="' + c.nameEn + '" required class="input-field text-sm"></div><div><label class="block text-xs font-medium text-slate-400 mb-1.5">' + t("phone") + '</label><input type="tel" name="phone" value="' + c.phone + '" required class="input-field text-sm"></div><div><label class="block text-xs font-medium text-slate-400 mb-1.5">' + t("address") + '</label><input type="text" name="address" value="' + c.address + '" class="input-field text-sm"></div><div><label class="block text-xs font-medium text-slate-400 mb-1.5">' + t("creditLimit") + '</label><input type="number" name="creditLimit" value="' + c.creditLimit + '" required min="1000" class="input-field text-sm"></div><div><label class="block text-xs font-medium text-slate-400 mb-1.5">Status</label><select name="status" class="input-field text-sm text-slate-300"><option value="ACTIVE" ' + (c.status === "ACTIVE" ? "selected" : "") + '>Active</option><option value="OVERDUE" ' + (c.status === "OVERDUE" ? "selected" : "") + '>Overdue</option><option value="CLOSED" ' + (c.status === "CLOSED" ? "selected" : "") + '>Closed</option></select></div><div><label class="block text-xs font-medium text-slate-400 mb-1.5">' + t("notes") + '</label><textarea name="notes" rows="2" class="input-field text-sm resize-none">' + c.notes + '</textarea></div><div class="flex gap-3 pt-2"><button type="button" onclick="closeModal()" class="flex-1 btn-secondary text-sm">' + t("cancel") + '</button><button type="submit" class="flex-1 btn-primary text-sm">' + t("saveChanges") + '</button></div></form></div>');
+}
+
+function handleEditCustomer(id, form) {
+  var fd = new FormData(form);
+  var customers = DB.get("customers", []);
+  var idx = customers.findIndex(function(c) { return c.id === id; });
+  if (idx === -1) return;
+  var name = fd.get("name");
+  customers[idx] = {
+    ...customers[idx], name: name, nameEn: name, phone: fd.get("phone"), address: fd.get("address") || "",
+    creditLimit: parseInt(fd.get("creditLimit")) || customers[idx].creditLimit, status: fd.get("status"), notes: fd.get("notes") || "",
+    lastEditedBy: CU.id, lastEditedByName: CU.name
+  };
+  DB.set("customers", customers);
+  closeModal();
+  toast(t("customerUpdated"), "success");
+  showCustomerDetail(id);
+}
+
+// ==================== DELETE CUSTOMER ====================
+function confirmDeleteCustomer(id) {
+  var customers = DB.get("customers", []);
+  var c = customers.find(function(x) { return x.id === id; });
+  if (!c) return;
+  var dn = L === "np" ? c.name : c.nameEn;
+  openModal('<div class="p-5"><div class="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4"><svg class="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></div><h3 class="text-lg font-bold text-white text-center mb-2">' + t("deleteCustomer") + '?</h3><p class="text-sm text-slate-400 text-center mb-1">' + dn + '</p><p class="text-xs text-slate-500 text-center mb-5">' + t("deleteConfirm") + '</p><div class="flex gap-3"><button onclick="closeModal()" class="flex-1 btn-secondary text-sm">' + t("cancel") + '</button><button onclick="handleDeleteCustomer('' + id + '')" class="flex-1 btn-danger text-sm">' + t("deleteCustomer") + '</button></div></div>');
+}
+
+function handleDeleteCustomer(id) {
+  var customers = DB.get("customers", []).filter(function(c) { return c.id !== id; });
+  var transactions = DB.get("transactions", []).filter(function(t) { return t.customerId !== id; });
+  DB.set("customers", customers);
+  DB.set("transactions", transactions);
+  closeModal();
+  toast(t("customerDeleted"), "info");
+  showPage("customers");
+}
+
+// ==================== CREDIT ====================
+function openCreditModal(cid) {
+  var customers = DB.get("customers", []);
+  var c = customers.find(function(x) { return x.id === cid; });
+  if (!c) return;
+  var av = c.creditLimit - c.balance;
+  var dn = L === "np" ? c.name : c.nameEn;
+  openModal('<div class="p-5"><h3 class="text-lg font-bold text-white mb-1">' + t("addCredit") + '</h3><p class="text-xs text-slate-400 mb-4">' + dn + ' &bull; ' + t("available") + ': ' + fn(av) + '</p><form onsubmit="event.preventDefault();handleAddCredit('' + cid + '',this);" class="space-y-4"><div><label class="block text-xs font-medium text-slate-400 mb-1.5">' + t("amount") + ' *</label><input type="number" name="amount" required min="1" max="' + av + '" class="input-field text-sm text-lg font-bold" placeholder="0"><p class="text-[10px] text-slate-500 mt-1">Max: ' + fn(av) + '</p></div><div><label class="block text-xs font-medium text-slate-400 mb-1.5">' + t("description") + ' *</label><input type="text" name="description" required class="input-field text-sm" placeholder="Rice, Dal, Oil"></div><div><label class="block text-xs font-medium text-slate-400 mb-1.5">' + t("date") + '</label><input type="date" name="date" value="' + new Date().toISOString().split("T")[0] + '" required class="input-field text-sm text-slate-300"></div><div class="flex gap-3 pt-2"><button type="button" onclick="closeModal()" class="flex-1 btn-secondary text-sm">' + t("cancel") + '</button><button type="submit" class="flex-1 btn-primary text-sm">' + t("addCredit") + '</button></div></form></div>');
+}
+
+function handleAddCredit(cid, form) {
+  var fd = new FormData(form);
+  var amt = parseInt(fd.get("amount")) || 0;
+  var customers = DB.get("customers", []);
+  var c = customers.find(function(x) { return x.id === cid; });
+  if (!c) return;
+  if (c.balance + amt > c.creditLimit) { toast(t("exceedsLimit"), "error"); return; }
+  var transactions = DB.get("transactions", []);
+  transactions.push({
+    id: "t" + Date.now(), customerId: cid, type: "CREDIT", amount: amt,
+    description: fd.get("description"), date: fd.get("date"),
+    createdBy: CU.id, createdByName: CU.name, createdAt: new Date().toISOString()
+  });
+  c.balance += amt;
+  if (c.status === "CLOSED") c.status = "ACTIVE";
+  DB.set("transactions", transactions);
+  DB.set("customers", customers);
+  closeModal();
+  toast(t("creditAdded") + ": " + fn(amt), "success");
+  showCustomerDetail(cid);
+}
+
+// ==================== PAYMENT ====================
+function openPaymentModal(cid) {
+  var customers = DB.get("customers", []);
+  var c = customers.find(function(x) { return x.id === cid; });
+  if (!c) return;
+  var dn = L === "np" ? c.name : c.nameEn;
+  openModal('<div class="p-5"><h3 class="text-lg font-bold text-white mb-1">' + t("takePayment") + '</h3><p class="text-xs text-slate-400 mb-4">' + dn + ' &bull; ' + t("currentBalance") + ': ' + fn(c.balance) + '</p><form onsubmit="event.preventDefault();handleAddPayment('' + cid + '',this);" class="space-y-4"><div><label class="block text-xs font-medium text-slate-400 mb-1.5">' + t("amount") + ' *</label><input type="number" name="amount" required min="1" max="' + c.balance + '" class="input-field text-sm text-lg font-bold" placeholder="0"><p class="text-[10px] text-slate-500 mt-1">Max: ' + fn(c.balance) + '</p></div><div><label class="block text-xs font-medium text-slate-400 mb-1.5">' + t("description") + '</label><input type="text" name="description" class="input-field text-sm" placeholder="Cash payment"></div><div><label class="block text-xs font-medium text-slate-400 mb-1.5">' + t("date") + '</label><input type="date" name="date" value="' + new Date().toISOString().split("T")[0] + '" required class="input-field text-sm text-slate-300"></div><div class="flex gap-3 pt-2"><button type="button" onclick="closeModal()" class="flex-1 btn-secondary text-sm">' + t("cancel") + '</button><button type="submit" class="flex-1 btn-primary text-sm">' + t("recordPayment") + '</button></div></form></div>');
+}
+
+function handleAddPayment(cid, form) {
+  var fd = new FormData(form);
+  var amt = parseInt(fd.get("amount")) || 0;
+  var customers = DB.get("customers", []);
+  var c = customers.find(function(x) { return x.id === cid; });
+  if (!c) return;
+  if (amt > c.balance) { toast(t("exceedsBalance"), "error"); return; }
+  var transactions = DB.get("transactions", []);
+  transactions.push({
+    id: "t" + Date.now(), customerId: cid, type: "PAYMENT", amount: amt,
+    description: fd.get("description") || "Payment received", date: fd.get("date"),
+    createdBy: CU.id, createdByName: CU.name, createdAt: new Date().toISOString()
+  });
+  c.balance -= amt;
+  if (c.balance <= 0) c.status = "ACTIVE";
+  DB.set("transactions", transactions);
+  DB.set("customers", customers);
+  closeModal();
+  toast(t("paymentRecorded") + ": " + fn(amt), "success");
+  showCustomerDetail(cid);
+}
+
+// ==================== TRANSACTIONS ====================
+function renderTransactions() {
+  var transactions = DB.get("transactions", []).sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+  var customers = DB.get("customers", []);
+  var content = document.getElementById("main-content");
+  var html = "";
+
+  html += '<div class="mb-4"><h2 class="text-xl font-bold text-white">' + t("transactions") + '</h2><p class="text-xs text-slate-400">' + transactions.length + ' ' + t("entries") + '</p></div>';
+  html += '<div class="space-y-2">';
+  transactions.forEach(function(t) {
+    var c = customers.find(function(x) { return x.id === t.customerId; });
+    var un = uName(t.createdBy);
+    var uc = uColor(t.createdBy);
+    var dn = c ? (L === "np" ? c.name : c.nameEn) : "Unknown";
+    html += '<div class="card p-3.5 flex items-center justify-between card-hover" onclick="showCustomerDetail('' + t.customerId + '')"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full ' + (t.type === "CREDIT" ? "bg-red-500/10 text-red-400" : "bg-emerald-500/10 text-emerald-400") + ' flex items-center justify-center text-xs font-bold">' + (t.type === "CREDIT" ? "CR" : "PY") + '</div><div><p class="text-sm font-medium text-white">' + dn + '</p><p class="text-[10px] text-slate-500">' + t.description + '</p><p class="text-[10px] text-slate-600">' + fd(t.date) + '</p><p class="text-[10px]" style="color:' + uc + '">' + t("by") + ' ' + un + '</p></div></div><div class="text-right"><p class="text-sm font-bold ' + (t.type === "CREDIT" ? "text-red-400" : "text-emerald-400") + '">' + (t.type === "CREDIT" ? "+" : "-") + fn(t.amount) + '</p><span class="badge ' + (t.type === "CREDIT" ? "bg-red-500/10 text-red-400 border-red-500/20" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20") + '">' + t.type + '</span></div></div>';
+  });
+  html += '</div>';
+  content.innerHTML = html;
+}
+
+// ==================== SETTINGS ====================
+function renderSettings() {
+  var customers = DB.get("customers", []);
+  var transactions = DB.get("transactions", []);
+  var totalCredit = customers.reduce(function(s, c) { return s + c.balance; }, 0);
+  var backups = DB.get("backups", []);
+  var lastBackup = backups.length > 0 ? backups[backups.length - 1] : null;
+  var lastBackupTime = lastBackup ? fd(lastBackup.createdAt) + " " + new Date(lastBackup.createdAt).toLocaleTimeString("en-IN", {hour:"2-digit", minute:"2-digit"}) : t("never");
+
+  var content = document.getElementById("main-content");
+  var html = "";
+
+  html += '<div class="mb-5"><h2 class="text-xl font-bold text-white">' + t("settings") + '</h2><p class="text-xs text-slate-400">' + t("loggedInAs") + ': <span style="color:' + CU.color + '">' + (L === "np" ? CU.nameNp : CU.name) + '</span></p></div>';
+
+  html += '<div class="card p-4 mb-4"><h3 class="text-sm font-semibold text-white mb-3">' + t("language") + '</h3><div class="flex gap-2"><button onclick="toggleLanguage()" class="flex-1 py-3 rounded-xl btn-secondary text-sm flex items-center justify-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>' + (L === "en" ? t("switchLang") : t("switchEng")) + '</button></div></div>';
+
+  html += '<div class="card p-4 mb-4"><h3 class="text-sm font-semibold text-white mb-3">' + t("storeInfo") + '</h3><div class="flex items-center gap-3 mb-4"><div class="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center"><svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg></div><div><p class="text-sm font-bold text-white">Yalambar Store</p><p class="text-xs text-slate-500">Credit Tracker v2.0</p></div></div><div class="space-y-2 text-sm"><div class="flex justify-between"><span class="text-slate-400">' + t("currency") + '</span><span class="text-white">' + t("nepaliRupee") + '</span></div><div class="flex justify-between"><span class="text-slate-400">' + t("totalCustomers") + '</span><span class="text-white">' + customers.length + '</span></div><div class="flex justify-between"><span class="text-slate-400">' + t("totalTransactions") + '</span><span class="text-white">' + transactions.length + '</span></div><div class="flex justify-between"><span class="text-slate-400">' + t("totalCreditGiven") + '</span><span class="text-white">' + fn(totalCredit) + '</span></div></div></div>';
+
+  html += '<div class="card p-4 mb-4"><h3 class="text-sm font-semibold text-white mb-1">' + t("backup") + '</h3><p class="text-xs text-slate-500 mb-1">' + t("backupDesc") + '</p><p class="text-xs text-slate-600 mb-3">' + t("lastBackup") + ': ' + lastBackupTime + '</p><div class="space-y-2"><button onclick="createCloudBackup()" class="w-full py-3 rounded-xl btn-primary text-sm flex items-center justify-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>' + t("backupNow") + '</button><button onclick="restoreFromBackup()" class="w-full py-3 rounded-xl btn-secondary text-sm flex items-center justify-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>' + t("restore") + '</button></div></div>';
+
+  html += '<div class="card p-4 mb-4"><h3 class="text-sm font-semibold text-white mb-3">' + t("dataManagement") + '</h3><button onclick="exportData()" class="w-full py-3 rounded-xl btn-secondary text-sm flex items-center justify-center gap-2 mb-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>' + t("exportData") + '</button><button onclick="confirmResetData()" class="w-full py-3 rounded-xl border border-red-500/30 text-red-400 text-sm font-medium hover:bg-red-500/10 transition-colors flex items-center justify-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>' + t("resetAllData") + '</button></div>';
+
+  html += '<div class="card p-4"><h3 class="text-sm font-semibold text-white mb-3">' + t("about") + '</h3><p class="text-xs text-slate-400 leading-relaxed">' + t("aboutText") + '</p><p class="text-xs text-slate-600 mt-2">' + t("builtWith") + '</p></div>';
+  content.innerHTML = html;
+}
+
+// ==================== CLOUD BACKUP ====================
+function createCloudBackup() {
+  var data = {
+    customers: DB.get("customers", []),
+    transactions: DB.get("transactions", []),
+    settings: DB.get("settings", {}),
+    createdAt: new Date().toISOString(),
+    createdBy: CU.id,
+    createdByName: CU.name,
+    version: "2.0"
+  };
+  var backups = DB.get("backups", []);
+  backups.push(data);
+  if (backups.length > 10) backups = backups.slice(-10);
+  DB.set("backups", backups);
+  toast(t("backupSuccess") + " " + fd(data.createdAt), "success");
+  renderSettings();
+}
+
+function restoreFromBackup() {
+  var backups = DB.get("backups", []);
+  if (backups.length === 0) { toast(t("noBackupFound"), "error"); return; }
+  var html = '<div class="p-5"><h3 class="text-lg font-bold text-white mb-4">' + t("restore") + '</h3><div class="space-y-2 max-h-64 overflow-y-auto">';
+  backups.slice().reverse().forEach(function(b, idx) {
+    var actualIdx = backups.length - 1 - idx;
+    var ds = fd(b.createdAt) + " " + new Date(b.createdAt).toLocaleTimeString("en-IN", {hour:"2-digit", minute:"2-digit"});
+    var un = uName(b.createdBy);
+    html += '<div class="card p-3 cursor-pointer hover:bg-slate-800/50" onclick="performRestore(' + actualIdx + ')"><div class="flex items-center justify-between"><div><p class="text-sm text-white font-medium">' + ds + '</p><p class="text-[10px] text-slate-500">' + b.customers.length + ' ' + t("customersCount").toLowerCase() + ', ' + b.transactions.length + ' ' + t("entries") + '</p><p class="text-[10px] text-slate-600">' + t("by") + ' ' + un + '</p></div><svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg></div></div>';
+  });
+  html += '</div><div class="flex gap-3 mt-4"><button onclick="closeModal()" class="flex-1 btn-secondary text-sm">' + t("cancel") + '</button></div></div>';
+  openModal(html);
+}
+
+function performRestore(idx) {
+  var backups = DB.get("backups", []);
+  if (!backups[idx]) { toast(t("noBackupFound"), "error"); return; }
+  var b = backups[idx];
+  DB.set("customers", b.customers);
+  DB.set("transactions", b.transactions);
+  if (b.settings) DB.set("settings", b.settings);
+  closeModal();
+  toast(t("restoreSuccess"), "success");
+  showPage("dashboard");
+}
+
+// ==================== EXPORT & RESET ====================
+function exportData() {
+  var data = { customers: DB.get("customers", []), transactions: DB.get("transactions", []), exportedAt: new Date().toISOString(), exportedBy: CU.name };
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = "yalambar-store-data-" + new Date().toISOString().split("T")[0] + ".json";
+  a.click();
+  URL.revokeObjectURL(url);
+  toast(t("dataExported"), "success");
+}
+
+function confirmResetData() {
+  openModal('<div class="p-5"><div class="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4"><svg class="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></div><h3 class="text-lg font-bold text-white text-center mb-2">' + t("resetAllData") + '?</h3><p class="text-sm text-slate-400 text-center mb-5">' + t("resetConfirm") + '</p><div class="flex gap-3"><button onclick="closeModal()" class="flex-1 btn-secondary text-sm">' + t("cancel") + '</button><button onclick="resetAllData()" class="flex-1 btn-danger text-sm">' + t("resetAllData") + '</button></div></div>');
+}
+
+function resetAllData() {
+  localStorage.removeItem("ys_customers");
+  localStorage.removeItem("ys_transactions");
+  localStorage.removeItem("ys_settings");
+  localStorage.removeItem("ys_backups");
+  initData();
+  closeModal();
+  toast(t("dataReset"), "info");
+  showPage("dashboard");
+}
+
+// ==================== INIT ====================
+initData();
+</script>
+</body>
+</html>
