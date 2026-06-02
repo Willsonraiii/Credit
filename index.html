@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Yalambar Store - Credit Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{font-family:'Inter','Noto Sans Devanagari',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#020617;color:#e2e8f0}
+.glass{background:rgba(15,23,42,0.9);backdrop-filter:blur(16px);border:1px solid rgba(51,65,85,0.4)}
+.card{background:rgba(15,23,42,0.6);border:1px solid rgba(51,65,85,0.3);border-radius:14px}
+.card-hover{transition:all .2s ease}
+.card-hover:active{transform:scale(0.98)}
+.btn-primary{background:linear-gradient(135deg,#059669,#10b981);color:#fff;font-weight:600;padding:12px;border-radius:12px}
+.btn-primary:active{transform:scale(0.97)}
+.btn-danger{background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;font-weight:600;padding:12px;border-radius:12px}
+.btn-secondary{background:rgba(51,65,85,0.5);border:1px solid rgba(71,85,105,0.5);color:#e2e8f0;padding:12px;border-radius:12px}
+.input-field{background:rgba(15,23,42,0.8);border:1px solid rgba(51,65,85,0.5);color:#f1f5f9;padding:12px;border-radius:12px;width:100%}
+.input-field:focus{outline:none;border-color:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,0.15)}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.animate-in{animation:fi .25s ease-out}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.slide-up{animation:su .3s ease-out}
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:100;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;animation:fi .3s ease;max-width:90%;text-align:center}
+.toast-success{background:rgba(6,78,59,0.95);border:1px solid #059669;color:#34d399}
+.toast-error{background:rgba(127,29,29,0.95);border:1px solid #dc2626;color:#fca5a5}
+.toast-info{background:rgba(30,58,138,0.95);border:1px solid #3b82f6;color:#93c5fd}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.modal-content{background:#0f172a;border:1px solid rgba(51,65,85,0.5);border-radius:20px 20px 0 0;width:100%;max-height:90vh;overflow-y:auto;animation:su .25s ease-out}
+@media(min-width:640px){.modal-overlay{align-items:center}.modal-content{border-radius:16px;max-width:480px;max-height:85vh}}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;border:1px solid}
+.lang-np *{font-family:'Noto Sans Devanagari','Inter',system-ui,sans-serif}
+.pin-input{width:56px;height:56px;text-align:center;font-size:24px;font-weight:700;border-radius:12px;background:rgba(15,23,42,0.8);border:1px solid rgba(51,65,85,0.5);color:#f1f5f9}
+.pin-input:focus{outline:none;border-color:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,0.15)}
+.user-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:600}
+</style>
+<base target="_blank">
+</head>
+<body class="min-h-screen">
+
+<!-- LOGIN SCREEN -->
+<div id="screen-login" class="min-h-screen flex flex-col items-center justify-center p-5">
+  <div class="w-full max-w-sm">
+    <div class="text-center mb-6">
+      <div class="w-20 h-20 rounded-2xl mx-auto mb-4 shadow-lg bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center">
+        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+      </div>
+      <h1 class="text-2xl font-bold text-white" data-en="Yalambar Store" data-np="यालम्बर स्टोर">Yalambar Store</h1>
+      <p class="text-sm text-slate-400 mt-1" data-en="Credit Tracker System" data-np="क्रेडिट ट्र्याकर प्रणाली">Credit Tracker System</p>
+    </div>
+    <div class="card p-5">
+      <div class="text-center mb-4">
+        <p class="text-xs text-slate-500 mb-3" data-en="Enter your PIN code" data-np="आफ्नो पिन कोड हाल्नुहोस्">Enter your PIN code</p>
+        <div class="flex justify-center gap-2 mb-2" id="pin-display">
+          <div class="w-3 h-3 rounded-full bg-slate-700" id="pin-dot-0"></div>
+          <div class="w-3 h-3 rounded-full bg-slate-700" id="pin-dot-1"></div>
+          <div class="w-3 h-3 rounded-full bg-slate-700" id="pin-dot-2"></div>
+          <div class="w-3 h-3 rounded-full bg-slate-700" id="pin-dot-3"></div>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-2 mb-4">
+        <button onclick="enterPin('1')" class="pin-input">1</button>
+        <button onclick="enterPin('2')" class="pin-input">2</button>
+        <button onclick="enterPin('3')" class="pin-input">3</button>
+        <button onclick="enterPin('4')" class="pin-input">4</button>
+        <button onclick="enterPin('5')" class="pin-input">5</button>
+        <button onclick="enterPin('6')" class="pin-input">6</button>
+        <button onclick="enterPin('7')" class="pin-input">7</button>
+        <button onclick="enterPin('8')" class="pin-input">8</button>
+        <button onclick="enterPin('9')" class="pin-input">9</button>
+        <button onclick="clearPin()" class="pin-input text-red-400 text-sm font-medium" data-en="CLR" data-np="मेट">CLR</button>
+        <button onclick="enterPin('0')" class="pin-input">0</button>
+        <button onclick="backspacePin()" class="pin-input text-slate-400">
+          <svg class="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"/></svg>
+        </button>
+      </div>
+      <p class="text-[10px] text-slate-600 text-center" data-en="Quick Login" data-np="द्रुत लगइन">Quick Login</p>
+      <div class="flex justify-center gap-2 mt-2 flex-wrap">
+        <button onclick="quickLogin('1212')" class="px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700 text-xs text-slate-300">Wilson</button>
+        <button onclick="quickLogin('1234')" class="px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700 text-xs text-slate-300">Nita</button>
+        <button onclick="quickLogin('0000')" class="px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700 text-xs text-slate-300">Maila</button>
+        <button onclick="quickLogin('1122')" class="px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700 text-xs text-slate-300">Kush</button>
+      </div>
+    </div>
+    <div class="mt-4 text-center">
+      <p class="text-[10px] text-slate-600" data-en="All data stored locally" data-np="सबै डाटा स्थानीय रूपमा">All data stored locally</p>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="screen-app" class="hidden min-h-screen flex flex-col">
+  <header class="fixed top-0 left-0 right-0 z-40 glass border-b border-slate-800/50">
+    <div class="flex items-center justify-between px-4 py-3 max-w-lg mx-auto">
+      <div class="flex items-center gap-2.5">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+        </div>
+        <div>
+          <h1 class="text-sm font-bold text-white" data-en="Yalambar Store" data-np="यालम्बर स्टोर">Yalambar Store</h1>
+          <div class="flex items-center gap-1.5">
+            <span id="header-role" class="text-[10px] font-medium">--</span>
+            <span class="text-[10px] text-slate-600">|</span>
+            <span id="nepali-time" class="text-[10px] text-slate-500">--:--</span>
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-1">
+        <button onclick="toggleLanguage()" class="p-2 rounded-lg hover:bg-slate-800/50 text-slate-400" title="Switch Language">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
+        </button>
+        <button onclick="handleLogout()" class="p-2 rounded-lg hover:bg-slate-800/50 text-slate-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+  <main id="main-content" class="flex-1 pt-16 pb-24 px-4 max-w-lg mx-auto w-full"></main>
+  <nav class="fixed bottom-0 left-0 right-0 z-40 glass border-t border-slate-800/50" style="padding-bottom:env(safe-area-inset-bottom,20px)">
+    <div class="flex justify-around py-2 max-w-lg mx-auto" id="bottom-nav"></div>
+  </nav>
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay" class="modal-overlay hidden" onclick="if(event.target===this)closeModal()">
+  <div class="modal-content" id="modal-body" onclick="event.stopPropagation()"></div>
+</div>
+
+<script>
+
+// ==================== USERS ====================
+const USERS = [
+  { id: "u1", pin: "1212", name: "Wilson", nameNp: "विल्सन", color: "#10b981" },
+  { id: "u2", pin: "1234", name: "Nita", nameNp: "निता", color: "#3b82f6" },
+  { id: "u3", pin: "0000", name: "Maila", nameNp: "माइला", color: "#f59e0b" },
+  { id: "u4", pin: "1122", name: "Kush", nameNp: "कुश", color: "#8b5cf6" }
+];
+
+function getUser(id) { return USERS.find(function(u) { return u.id === id; }); }
+function uName(id) { var u = getUser(id); return u ? (L === "np" ? u.nameNp : u.name) : id; }
+function uColor(id) { var u = getUser(id); return u ? u.color : "#64748b"; }
+
+// ==================== LANGUAGE ====================
+const TX = {
+  en: {
+    dashboard: "Dashboard", customers: "Customers", transactions: "History", settings: "Settings",
+    totalCredit: "Total Credit", customersCount: "Customers", todaySales: "Today Sales", overdue: "Overdue",
+    creditOverview: "Credit Overview", recentActivity: "Recent Activity", viewAll: "View All", topDebtors: "Top Debtors",
+    search: "Search by name or phone...", all: "All", active: "Active", closed: "Closed",
+    addCustomer: "Add New Customer", fullName: "Full Name", phone: "Phone Number", address: "Address",
+    creditLimit: "Credit Limit (Rs.)", notes: "Notes", cancel: "Cancel", add: "Add Customer",
+    editCustomer: "Edit Customer", saveChanges: "Save Changes", deleteCustomer: "Delete Customer",
+    deleteConfirm: "This will permanently remove the customer and all their transaction history.",
+    addCredit: "Add Credit", takePayment: "Take Payment", amount: "Amount (Rs.)", description: "Description",
+    date: "Date", recordPayment: "Record Payment", transactionHistory: "Transaction History",
+    entries: "entries", noTransactions: "No transactions yet", storeInfo: "Store Info",
+    dataManagement: "Data Management", exportData: "Export Data (JSON)", resetAllData: "Reset All Data",
+    about: "About", aboutText: "Yalambar Store Credit Tracker helps you manage customer credit, track payments, and monitor outstanding balances. All data is stored locally on your device.",
+    builtWith: "Built with care for daily store operations.", currency: "Currency", nepaliRupee: "Nepalese Rupee (NPR)",
+    totalCustomers: "Total Customers", totalTransactions: "Total Transactions", totalCreditGiven: "Total Credit Given",
+    resetConfirm: "This will delete all customers and transactions. This cannot be undone.",
+    welcome: "Welcome", invalidPin: "Invalid PIN code", customerAdded: "Customer added successfully!",
+    customerUpdated: "Customer updated!", customerDeleted: "Customer deleted", creditAdded: "Credit added",
+    paymentRecorded: "Payment recorded", dataExported: "Data exported!", dataReset: "All data reset to defaults",
+    exceedsLimit: "Amount exceeds credit limit!", exceedsBalance: "Payment exceeds balance!",
+    customerNotFound: "Customer not found", available: "Available", utilized: "utilized", ofLimit: "of limit",
+    needAttention: "Need attention", activeCount: "active", overdueCount: "overdue",
+    today: "Today", yesterday: "Yesterday", daysAgo: "days ago", customerSince: "Customer since",
+    currentBalance: "Current Balance", backup: "Cloud Backup", backupDesc: "Backup your data to cloud storage",
+    restore: "Restore from Backup", backupNow: "Backup Now", lastBackup: "Last Backup", never: "Never",
+    backupSuccess: "Backup successful!", restoreSuccess: "Restore successful!", noBackupFound: "No backup found",
+    language: "Language", english: "English", nepali: "Nepali", switchLang: "Switch to Nepali", switchEng: "Switch to English",
+    loggedInAs: "Logged in as", by: "by", editedBy: "edited by", addedBy: "added by", credit: "credit"
+  },
+  np: {
+    dashboard: "ड्यासबोर्ड", customers: "ग्राहकहरू", transactions: "इतिहास", settings: "सेटिङहरू",
+    totalCredit: "कुल क्रेडिट", customersCount: "ग्राहकहरू", todaySales: "आजको बिक्री", overdue: "ढिलो",
+    creditOverview: "क्रेडिट अवलोकन", recentActivity: "हालको गतिविधि", viewAll: "सबै हेर्नुहोस्", topDebtors: "शीर्ष ऋणीहरू",
+    search: "नाम वा फोनले खोज्नुहोस्...", all: "सबै", active: "सक्रिय", closed: "बन्द",
+    addCustomer: "नयाँ ग्राहक थप्नुहोस्", fullName: "पूरा नाम", phone: "फोन नम्बर", address: "ठेगाना",
+    creditLimit: "क्रेडिट सीमा (रु.)", notes: "टिप्पणीहरू", cancel: "रद्द गर्नुहोस्", add: "ग्राहक थप्नुहोस्",
+    editCustomer: "ग्राहक सम्पादन गर्नुहोस्", saveChanges: "परिवर्तनहरू सुरक्षित गर्नुहोस्", deleteCustomer: "ग्राहक मेट्नुहोस्",
+    deleteConfirm: "यसले ग्राहक र उनीहरूको सबै कारोबार इतिहास स्थायी रूपमा हटाउनेछ।",
+    addCredit: "क्रेडिट थप्नुहोस्", takePayment: "भुक्तानी लिनुहोस्", amount: "रकम (रु.)", description: "विवरण",
+    date: "मिति", recordPayment: "भुक्तानी रेकर्ड गर्नुहोस्", transactionHistory: "कारोबार इतिहास",
+    entries: "प्रविष्टिहरू", noTransactions: "अहिलेसम्म कुनै कारोबार छैन", storeInfo: "स्टोर जानकारी",
+    dataManagement: "डाटा व्यवस्थापन", exportData: "डाटा निर्यात गर्नुहोस् (JSON)", resetAllData: "सबै डाटा रिसेट गर्नुहोस्",
+    about: "बारेमा", aboutText: "यालम्बर स्टोर क्रेडिट ट्र्याकरले ग्राहक क्रेडिट व्यवस्थापन, भुक्तानी ट्र्याकिङ र बकाया रकम अनुगमन गर्न मद्दत गर्छ। सबै डाटा यस डिभाइसमा स्थानीय रूपमा संग्रहित छ।",
+    builtWith: "दैनिक स्टोर सञ्चालनको लागि हेरचाह गरेर निर्माण गरिएको।", currency: "मुद्रा", nepaliRupee: "नेपाली रुपैयाँ (NPR)",
+    totalCustomers: "कुल ग्राहकहरू", totalTransactions: "कुल कारोबारहरू", totalCreditGiven: "कुल दिइएको क्रेडिट",
+    resetConfirm: "यसले सबै ग्राहक र कारोबारहरू मेट्नेछ। यो पूर्ववत गर्न सकिँदैन।",
+    welcome: "स्वागत छ", invalidPin: "अमान्य पिन कोड", customerAdded: "ग्राहक सफलतापूर्वक थपियो!",
+    customerUpdated: "ग्राहक अद्यावधिक गरियो!", customerDeleted: "ग्राहक मेटियो", creditAdded: "क्रेडिट थपियो",
+    paymentRecorded: "भुक्तानी रेकर्ड गरियो", dataExported: "डाटा निर्यात गरियो!", dataReset: "सबै डाटा पूर्वनिर्धारितमा रिसेट गरियो",
+    exceedsLimit: "रकम क्रेडिट सीमा भन्दा बढी छ!", exceedsBalance: "भुक्तानी ब्यालेन्स भन्दा बढी छ!",
+    customerNotFound: "ग्राहक भेटिएन", available: "उपलब्ध", utilized: "प्रयोग भएको", ofLimit: "सीमाको",
+    needAttention: "ध्यान आवश्यक", activeCount: "सक्रिय", overdueCount: "ढिलो",
+    today: "आज", yesterday: "हिजो", daysAgo: "दिन अघि", customerSince: "ग्राहक बनेको मिति",
+    currentBalance: "हालको ब्यालेन्स", backup: "क्लाउड ब्याकअप", backupDesc: "आफ्नो डाटा क्लाउड स्टोरेजमा ब्याकअप गर्नुहोस्",
+    restore: "ब्याकअपबाट पुनर्स्थापना गर्नुहोस्", backupNow: "अहिले ब्याकअप गर्नुहोस्", lastBackup: "अन्तिम ब्याकअप", never: "कहिल्यै",
+    backupSuccess: "ब्याकअप सफल भयो!", restoreSuccess: "पुनर्स्थापना सफल भयो!", noBackupFound: "कुनै ब्याकअप भेटिएन",
+    language: "भाषा", english: "English", nepali: "Nepali", switchLang: "English मा स्विच गर्नुहोस्", switchEng: "Switch to Nepali",
+    loggedInAs: "लगइन गरिएको", by: "द्वारा", editedBy: "सम्पादन गरिएको", addedBy: "थपिएको", credit: "क्रेडिट"
+  }
+};
+
+var L = "en";
+var CU = null;
+var CP = "dashboard";
+var TT = null;
+var CS = "", CF = "";
+var PI = "";
+
+// ==================== DB ====================
+var DB = {
+  get: function(k, d) { try { var v = localStorage.getItem("ys_" + k); return v ? JSON.parse(v) : d; } catch(e) { return d; } },
+  set: function(k, v) { localStorage.setItem("ys_" + k, JSON.stringify(v)); }
+};
+
+function initData() {
+  if (!DB.get("users")) DB.set("users", USERS);
+  if (!DB.get("customers")) {
+    DB.set("customers", [
+      {id:"c1",name:"राम बहादुर",nameEn:"Ram Bahadur",phone:"9801234567",address:"काठमाडौं",creditLimit:50000,balance:12500,status:"ACTIVE",createdAt:"2024-01-15",notes:"नियमित ग्राहक",addedBy:"u1",addedByName:"Wilson"},
+      {id:"c2",name:"सीता देवी",nameEn:"Sita Devi",phone:"9809876543",address:"ललितपुर",creditLimit:30000,balance:8500,status:"ACTIVE",createdAt:"2024-02-20",notes:"नयाँ ग्राहक",addedBy:"u2",addedByName:"Nita"},
+      {id:"c3",name:"हरि प्रसाद",nameEn:"Hari Prasad",phone:"9812345678",address:"भक्तपुर",creditLimit:100000,balance:67500,status:"ACTIVE",createdAt:"2023-11-10",notes:"VIP ग्राहक",addedBy:"u3",addedByName:"Maila"},
+      {id:"c4",name:"गीता शर्मा",nameEn:"Gita Sharma",phone:"9823456789",address:"पोखरा",creditLimit:25000,balance:0,status:"ACTIVE",createdAt:"2024-03-05",notes:"",addedBy:"u4",addedByName:"Kush"},
+      {id:"c5",name:"कृष्ण दास",nameEn:"Krishna Das",phone:"9834567890",address:"काठमाडौं",creditLimit:40000,balance:38500,status:"OVERDUE",createdAt:"2023-09-20",notes:"बाँकी रकम",addedBy:"u1",addedByName:"Wilson"}
+    ]);
+  }
+  if (!DB.get("transactions")) {
+    DB.set("transactions", [
+      {id:"t1",customerId:"c1",type:"CREDIT",amount:5000,description:"चामल र दाल",date:"2024-06-01",createdBy:"u1",createdByName:"Wilson",createdAt:"2024-06-01T10:30:00"},
+      {id:"t2",customerId:"c1",type:"PAYMENT",amount:3000,description:"नगद भुक्तानी",date:"2024-06-05",createdBy:"u2",createdByName:"Nita",createdAt:"2024-06-05T14:20:00"},
+      {id:"t3",customerId:"c1",type:"CREDIT",amount:2500,description:"तेल र मसला",date:"2024-06-10",createdBy:"u3",createdByName:"Maila",createdAt:"2024-06-10T09:15:00"},
+      {id:"t4",customerId:"c2",type:"CREDIT",amount:3500,description:"किराना सामान",date:"2024-06-08",createdBy:"u4",createdByName:"Kush",createdAt:"2024-06-08T16:45:00"},
+      {id:"t5",customerId:"c2",type:"PAYMENT",amount:2000,description:"आंशिक भुक्तानी",date:"2024-06-12",createdBy:"u1",createdByName:"Wilson",createdAt:"2024-06-12T11:00:00"},
+      {id:"t6",customerId:"c3",type:"CREDIT",amount:15000,description:"थोक चामल",date:"2024-06-02",createdBy:"u2",createdByName:"Nita",createdAt:"2024-06-02T08:30:00"},
+      {id:"t7",customerId:"c3",type:"CREDIT",amount:8000,description:"खाने तेल",date:"2024-06-15",createdBy:"u3",createdByName:"Maila",createdAt:"2024-06-15T13:20:00"},
+      {id:"t8",customerId:"c5",type:"CREDIT",amount:12000,description:"चाडपर्व सामग्री",date:"2024-04-20",createdBy:"u4",createdByName:"Kush",createdAt:"2024-04-20T10:00:00"},
+      {id:"t9",customerId:"c5",type:"CREDIT",amount:8000,description:"थप सामग्री",date:"2024-05-10",createdBy:"u1",createdByName:"Wilson",createdAt:"2024-05-10T15:30:00"},
+      {id:"t10",customerId:"c5",type:"PAYMENT",amount:5000,description:"आंशिक भुक्तानी",date:"2024-05-25",createdBy:"u2",createdByName:"Nita",createdAt:"2024-05-25T12:00:00"}
+    ]);
+  }
+  if (!DB.get("settings")) DB.set("settings", {storeName:"Yalambar Store",currency:"NPR",lang:"en"});
+  if (!DB.get("backups")) DB.set("backups", []);
+  var s = DB.get("settings", {});
+  if (s.lang) L = s.lang;
+}
+
+// ==================== DATE/TIME ====================
+var NM = ["बैशाख","जेठ","असार","श्रावण","भदौ","असोज","कार्तिक","मंसिर","पुष","माघ","फाल्गुन","चैत"];
+var ND = ["आइतबार","सोमबार","मंगलबार","बुधबार","बिहीबार","शुक्रबार","शनिबार"];
+var ED = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var EM = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+function gnd() {
+  var n = new Date();
+  return { y: n.getFullYear() + 56, m: NM[(n.getMonth() + 3) % 12], d: ((n.getDate() + 15) % 30) || 15, w: ND[n.getDay()] };
+}
+
+function gd() {
+  var n = new Date();
+  if (L === "np") { var np = gnd(); return np.w + ", " + np.d + " " + np.m + " " + np.y; }
+  return ED[n.getDay()] + ", " + n.getDate() + " " + EM[n.getMonth()] + " " + n.getFullYear();
+}
+
+function fd(d) { try { return new Date(d).toLocaleDateString("en-IN", {day:"numeric", month:"short", year:"numeric"}); } catch(e) { return d; } }
+
+function da(d) {
+  var days = Math.floor((Date.now() - new Date(d).getTime()) / 86400000);
+  if (L === "np") return days === 0 ? "आज" : days === 1 ? "हिजो" : days + " दिन अघि";
+  return days === 0 ? "Today" : days === 1 ? "Yesterday" : days + " days ago";
+}
+
+function fn(n) {
+  if (L === "np") return "रु. " + new Intl.NumberFormat("en-IN").format(Math.abs(n || 0));
+  return "Rs. " + new Intl.NumberFormat("en-IN").format(Math.abs(n || 0));
+}
+
+function t(k) { return TX[L][k] || k; }
+
+function ut() {
+  var n = new Date();
+  var el = document.getElementById("nepali-time");
+  if (el) el.textContent = n.toLocaleTimeString("en-IN", {hour:"2-digit", minute:"2-digit", hour12:true});
+}
+setInterval(ut, 1000);
+
+// ==================== PIN LOGIN ====================
+function enterPin(d) {
+  if (PI.length < 4) { PI += d; updPin(); if (PI.length === 4) setTimeout(doLogin, 200); }
+}
+function backspacePin() { PI = PI.slice(0, -1); updPin(); }
+function clearPin() { PI = ""; updPin(); }
+function updPin() {
+  for (var i = 0; i < 4; i++) {
+    var dot = document.getElementById("pin-dot-" + i);
+    if (dot) dot.className = "w-3 h-3 rounded-full " + (i < PI.length ? "bg-emerald-400" : "bg-slate-700");
+  }
+}
+function quickLogin(pin) { PI = pin; updPin(); setTimeout(doLogin, 200); }
+
+function doLogin() {
+  var user = USERS.find(function(u) { return u.pin === PI; });
+  if (user) {
+    CU = user;
+    document.getElementById("screen-login").classList.add("hidden");
+    document.getElementById("screen-app").classList.remove("hidden");
+    var hr = document.getElementById("header-role");
+    hr.textContent = L === "np" ? user.nameNp : user.name;
+    hr.style.color = user.color;
+    toast(t("welcome") + ", " + (L === "np" ? user.nameNp : user.name) + "!", "success");
+    applyLang();
+    showPage("dashboard");
+    PI = ""; updPin();
+  } else {
+    toast(t("invalidPin"), "error");
+    PI = ""; updPin();
+  }
+}
+
+function handleLogout() {
+  CU = null;
+  document.getElementById("screen-app").classList.add("hidden");
+  document.getElementById("screen-login").classList.remove("hidden");
+  PI = ""; updPin();
+}
+
+// ==================== LANGUAGE ====================
+function toggleLanguage() {
+  L = L === "en" ? "np" : "en";
+  var s = DB.get("settings", {}); s.lang = L; DB.set("settings", s);
+  toast(L === "np" ? "भाषा नेपालीमा परिवर्तन गरियो" : "Language changed to English", "success");
+  applyLang();
+  if (CP === "dashboard") renderDashboard();
+  else if (CP === "customers") renderCustomers();
+  else if (CP === "transactions") renderTransactions();
+  else if (CP === "settings") renderSettings();
+}
+
+function applyLang() {
+  document.body.classList.toggle("lang-np", L === "np");
+  document.querySelectorAll("[data-en][data-np]").forEach(function(el) { el.textContent = el.getAttribute("data-" + L); });
+  if (CU) {
+    var hr = document.getElementById("header-role");
+    hr.textContent = L === "np" ? CU.nameNp : CU.name;
+    hr.style.color = CU.color;
+  }
+}
+
+// ==================== TOAST & MODAL ====================
+function toast(msg, type) {
+  var existing = document.querySelector(".toast");
+  if (existing) existing.remove();
+  if (TT) clearTimeout(TT);
+  var el = document.createElement("div");
+  el.className = "toast toast-" + type; el.textContent = msg;
+  document.body.appendChild(el);
+  TT = setTimeout(function() { el.remove(); }, 3000);
+}
+function openModal(html) { document.getElementById("modal-body").innerHTML = html; document.getElementById("modal-overlay").classList.remove("hidden"); document.body.style.overflow = "hidden"; }
+function closeModal() { document.getElementById("modal-overlay").classList.add("hidden"); document.body.style.overflow = ""; }
+
+// ==================== NAV ====================
+var NAV = [
+  {id:"dashboard", lEn:"Home", lNp:"होम", i:"M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"},
+  {id:"customers", lEn:"Customers", lNp:"ग्राहक", i:"M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"},
+  {id:"transactions", lEn:"History", lNp:"इतिहास", i:"M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"},
+  {id:"settings", lEn:"Settings", lNp:"सेटिङ", i:"M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z"}
+];
+
+function renderNav() {
+  document.getElementById("bottom-nav").innerHTML = NAV.map(function(item) {
+    var active = CP === item.id || (CP === "customer-detail" && item.id === "customers");
+    var label = L === "np" ? item.lNp : item.lEn;
+    return '<button onclick="showPage('' + item.id + '')" class="flex flex-col items-center gap-0.5 px-4 py-1 ' + (active ? "text-emerald-400" : "text-slate-500") + '"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="' + item.i + '"/></svg><span class="text-[10px]">' + label + '</span></button>';
+  }).join("");
+}
+
+function showPage(page) {
+  CP = page; renderNav();
+  var content = document.getElementById("main-content");
+  content.innerHTML = ""; content.classList.remove("animate-in");
+  void content.offsetWidth; content.classList.add("animate-in");
+  window.scrollTo(0, 0);
+  if (page === "dashboard") renderDashboard();
+  else if (page === "customers") renderCustomers();
+  else if (page === "transactions") renderTransactions();
+  else if (page === "settings") renderSettings();
+}
